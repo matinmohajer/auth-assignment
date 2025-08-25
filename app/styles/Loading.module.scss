@@ -1,0 +1,74 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  min-height: 50vh;
+
+  &.small {
+    min-height: 20vh;
+    gap: 0.5rem;
+  }
+
+  &.large {
+    min-height: 80vh;
+    gap: 1.5rem;
+  }
+}
+
+.spinner {
+  width: 2rem;
+  height: 2rem;
+  border: 2px solid transparent;
+  border-top: 2px solid #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+
+  .small & {
+    width: 1.5rem;
+    height: 1.5rem;
+    border-width: 1.5px;
+  }
+
+  .large & {
+    width: 3rem;
+    height: 3rem;
+    border-width: 3px;
+  }
+}
+
+.text {
+  font-size: 1rem;
+  color: #6b7280;
+  font-weight: 500;
+
+  .small & {
+    font-size: 0.875rem;
+  }
+
+  .large & {
+    font-size: 1.125rem;
+  }
+
+  @media (max-width: 768px) {
+    font-size: 0.9rem;
+
+    .small & {
+      font-size: 0.8rem;
+    }
+
+    .large & {
+      font-size: 1rem;
+    }
+  }
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
