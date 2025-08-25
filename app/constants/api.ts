@@ -1,9 +1,9 @@
 export const API_ENDPOINTS = {
-  LOGIN: '/api/auth/login',
+  LOGIN: "/api/auth/login",
 } as const;
 
 export const API_CONFIG = {
-  TIMEOUT: 10000, // 10 seconds
+  TIMEOUT: 10000,
   RETRY_ATTEMPTS: 3,
 } as const;
 

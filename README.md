@@ -9,16 +9,18 @@ A simple responsive authentication flow built with Next.js, TypeScript, and SCSS
 - **Responsive Design**: Mobile-first approach with SCSS Modules
 - **Type Safety**: Full TypeScript implementation
 - **Reusable Components**: Custom Input and Button components
-- **State Management**: Context API for authentication state
-- **Modern UI**: Beautiful gradients and smooth animations
+- **State Management**: Context API for authentication state + localStorage persistence
+- **Server Redirects**: Server components verify a signed cookie to redirect without flicker
 
 ## 📋 Requirements Met
 
 ### ✅ Authentication Pages
+
 - `/auth` → Login page with phone number validation
 - `/dashboard` → Dashboard with welcome message and user info
 
 ### ✅ Technical Requirements
+
 - **Next.js App Router**: ✅ Implemented
 - **TypeScript**: ✅ Full type safety
 - **SCSS Modules**: ✅ With proper nesting support
@@ -26,20 +28,11 @@ A simple responsive authentication flow built with Next.js, TypeScript, and SCSS
 - **Phone Validation**: ✅ Iranian mobile numbers (11 digits starting with "09")
 - **API Integration**: ✅ RandomUser.me API
 - **State Management**: ✅ Context API + localStorage
-- **Responsive Design**: ✅ Mobile-first approach
-
-### ✅ Component Architecture
-- **Reusable Components**: ✅ Input and Button components
-- **forwardRef**: ✅ Used for controlled inputs
-- **React Hooks**: ✅ Custom hooks for business logic
-- **TypeScript Safety**: ✅ Proper interfaces and types
-- **Scalable Structure**: ✅ Clean architecture with separation of concerns
-- **Service Layer**: ✅ API calls abstracted into services
-- **Custom Hooks**: ✅ Business logic separated from UI components
+- **Server Redirects**: ✅ Cookie-verified redirects on `/`, `/auth`, `/dashboard`
 
 ## 🛠 Tech Stack
 
-- **Framework**: Next.js 15.5.0 (App Router)
+- **Framework**: Next.js 15 (App Router)
 - **Language**: TypeScript
 - **Styling**: SCSS Modules
 - **Form Handling**: React Hook Form + Zod
@@ -52,60 +45,90 @@ A simple responsive authentication flow built with Next.js, TypeScript, and SCSS
 app/
 ├── api/
 │   └── auth/
-│       └── login/
-│           └── route.ts      # API handler for login
+│       ├── login/route.ts      # Login: fetch random user + set signed cookie
+│       └── logout/route.ts     # Logout: clear signed cookie
 ├── auth/
-│   ├── page.tsx              # Login page (UI only)
-│   └── schemas.ts            # Form validation schemas
+│   ├── page.tsx                # Server wrapper: redirects if already authed
+│   └── pageClient.tsx          # Client UI: login form + validation
 ├── dashboard/
-│   └── page.tsx              # Dashboard page (UI only)
+│   ├── page.tsx                # Server wrapper: protects route by cookie
+│   └── pageClient.tsx          # Client UI: renders user from localStorage/context
 ├── components/
-│   ├── Input.tsx             # Reusable input component
-│   ├── Button.tsx            # Reusable button component
-│   └── Loading.tsx           # Loading component
+│   ├── Input.tsx               # Reusable input component
+│   ├── Button.tsx              # Reusable button component
+│   └── Loading.tsx             # Loading component
 ├── constants/
-│   ├── api.ts                # API configuration constants
-│   └── routes.ts             # Route constants
+│   ├── api.ts                  # API configuration constants
+│   └── routes.ts               # Route constants
 ├── hooks/
-│   ├── useAuth.tsx           # Authentication context
-│   ├── useAuthActions.ts     # Authentication business logic
-│   └── useRouteProtection.ts # Route protection logic
+│   ├── useAuth.tsx             # Authentication context
+│   ├── useAuthActions.ts       # Authentication business logic (login/logout)
+│   └── useRouteProtection.ts   # (Legacy) client guard, still used in UI where needed
 ├── i18n/
-│   ├── useTranslation.ts     # Translation hook
+│   ├── useTranslation.ts       # Translation hook
 │   └── TranslationProvider.tsx # Translation context
 ├── locales/
-│   └── en.ts                 # English text content
+│   └── en.ts                   # English text content
 ├── services/
-│   └── authService.ts        # API service layer
+│   └── authService.ts          # API service layer
 ├── styles/
-│   ├── Auth.module.scss      # Login page styles
-│   ├── Button.module.scss    # Button component styles
-│   ├── Dashboard.module.scss # Dashboard page styles
-│   ├── Input.module.scss     # Input component styles
-│   └── Loading.module.scss   # Loading component styles
+│   ├── Auth.module.scss        # Login page styles
+│   ├── Button.module.scss      # Button component styles
+│   ├── Dashboard.module.scss   # Dashboard page styles
+│   ├── Input.module.scss       # Input component styles
+│   └── Loading.module.scss     # Loading component styles
 ├── types/
-│   └── index.ts              # TypeScript interfaces
+│   └── index.ts                # TypeScript interfaces
 ├── utils/
-│   ├── api.ts                # HTTP request utilities
-│   └── storage.ts            # localStorage utilities
-├── layout.tsx                # Root layout with providers
-└── page.tsx                  # Home page with redirects
+│   ├── api.ts                  # HTTP request utilities
+│   ├── storage.ts              # localStorage utilities (typed)
+│   └── authCookie.ts           # Signed cookie utilities for SSR redirects
+├── layout.tsx                  # Root layout with providers
+└── page.tsx                    # Home: server redirect based on signed cookie
 ```
+
+## 🔐 Authentication Model
+
+- **LocalStorage (assignment requirement):**
+  - The fetched RandomUser is saved in `localStorage` and mirrored in the Auth Context for client rendering.
+- **Signed Cookie (SSR redirects):**
+  - On successful login, a minimal httpOnly signed cookie (`auth=<value>.<hmac>`) is set by the login route.
+  - Server components (`/`, `/auth`, `/dashboard`) verify the signature to allow/deny access and perform redirects without client flicker.
+  - On logout, the cookie is cleared by the logout route and local storage is cleared client-side.
+
+This keeps user data in localStorage (as required) while leveraging Next.js server redirects for a smooth UX and preventing forged cookies.
 
 ## 🚀 Getting Started
 
 1. **Install dependencies**:
+
    ```bash
    npm install
    ```
 
 2. **Run the development server**:
+
    ```bash
    npm run dev
    ```
 
 3. **Open your browser**:
    Navigate to [http://localhost:3000](http://localhost:3000)
+
+## 🔧 Environment Variables
+
+Optional but recommended for cookie signing:
+
+- `AUTH_COOKIE_SECRET` – secret used to sign the auth cookie (HMAC-SHA256)
+- `RANDOM_USER_API_URL` – override RandomUser API base (`https://randomuser.me/api`)
+- `RANDOM_USER_RESULTS` – results count (default `1`)
+- `RANDOM_USER_NATIONALITY` – nationality filter (default `us`)
+
+Create a `.env.local` with:
+
+```env
+AUTH_COOKIE_SECRET=your-strong-secret
+```
 
 ## 🔧 Available Scripts
 
@@ -121,91 +144,26 @@ app/
 3. **Dashboard**: View user information and welcome message
 4. **Logout**: Click the logout button to return to login
 
-## 🎨 Design Features
+## 🔒 Flow Summary
 
-- **Responsive Layout**: Works on all screen sizes
-- **Modern UI**: Gradient backgrounds and smooth transitions
-- **Loading States**: Spinner animations during API calls
-- **Error Handling**: User-friendly error messages
-- **Form Validation**: Real-time validation feedback
-
-## 🔒 Authentication Flow
-
-1. User enters phone number on `/auth`
-2. Form validates Iranian mobile number format
-3. On submit, fetches random user from RandomUser.me API
-4. Stores user data in localStorage and Context
-5. Redirects to `/dashboard`
-6. Dashboard displays user information
-7. Logout clears data and redirects to `/auth`
+1. `/auth` (server) checks cookie → redirects to `/dashboard` if signed and valid.
+2. On submit, login route fetches a user, sets signed cookie; client stores user in localStorage/context; redirect to `/dashboard`.
+3. `/dashboard` (server) checks cookie; renders UI client that reads user from localStorage/context.
+4. Logout clears localStorage and the signed cookie; redirects to `/auth`.
 
 ## 📝 Form Validation
 
 - **Phone Number**: Must be 11 digits starting with "09"
-- **Required Fields**: All form fields are required
-- **Real-time Feedback**: Immediate validation messages
 - **Schema-based**: Uses Zod for type-safe validation
 
 ## 🎯 Key Components
 
-### Input Component
-- `forwardRef` for controlled inputs
-- Error and helper text support
-- Responsive design
-- TypeScript props interface
+- **Input**: `forwardRef`, error/helper text, responsive
+- **Button**: Variants, sizes, loading state, disabled handling
+- **Auth Context**: User state, localStorage persistence, login/logout
 
-### Button Component
-- Multiple variants (primary, secondary, outline)
-- Different sizes (small, medium, large)
-- Loading state with spinner
-- Disabled state handling
+## 🏗️ Architecture Notes
 
-### Auth Context
-- User state management
-- localStorage persistence
-- Loading states
-- Login/logout functions
-
-## 🏗️ Architecture Overview
-
-### **Service Layer** (`/services`)
-- **AuthService**: Handles all authentication API calls
-- Encapsulates business logic and API communication
-- Provides clean interfaces for components
-
-### **Custom Hooks** (`/hooks`)
-- **useAuth**: Context provider for authentication state
-- **useAuthActions**: Business logic for login/logout actions
-- **useRouteProtection**: Route protection and navigation logic
-
-### **Utils** (`/utils`)
-- **api.ts**: HTTP request utilities with error handling and retry logic
-- **storage.ts**: localStorage abstraction with error handling
-
-### **Constants** (`/constants`)
-- **api.ts**: API endpoints and configuration
-- **routes.ts**: Route definitions and protection rules
-
-### **Internationalization** (`/i18n`)
-- **useTranslation**: Simplified translation hook for English only
-- **TranslationProvider**: Context provider for text management
-- **locales/en.ts**: Centralized text content for all UI elements
-
-### **Components** (`/components`)
-- Pure UI components with no business logic
-- Reusable across the application
-- Props-driven with proper TypeScript interfaces
-- No hardcoded text - all text comes from translation system
-
-## 🔧 Customization
-
-The application is built with scalability in mind:
-
-- **Easy to extend**: Add new pages and components
-- **Themeable**: SCSS variables for easy styling changes
-- **Type-safe**: Full TypeScript coverage
-- **Modular**: Reusable components and hooks
-
-## 📄 License
-
-This project is created for educational purposes as part of an authentication assignment.
+- **Service Layer**: `AuthService` encapsulates API calls.
+- **Server Redirects**: Use `redirect()` in server components to eliminate flicker.
+- **Cookie Security**: Cookies are httpOnly and signed; signature is verified server-side.

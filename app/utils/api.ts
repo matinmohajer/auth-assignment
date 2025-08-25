@@ -1,4 +1,4 @@
-import { API_CONFIG, HTTP_STATUS } from '../constants/api';
+import { API_CONFIG, HTTP_STATUS } from "../constants/api";
 
 export interface ApiResponse<T = unknown> {
   success: boolean;
@@ -8,13 +8,9 @@ export interface ApiResponse<T = unknown> {
 }
 
 export class ApiError extends Error {
-  constructor(
-    message: string,
-    public status: number,
-    public data?: unknown
-  ) {
+  constructor(message: string, public status: number, public data?: unknown) {
     super(message);
-    this.name = 'ApiError';
+    this.name = "ApiError";
   }
 }
 
@@ -30,7 +26,7 @@ export async function apiRequest<T = unknown>(
       ...options,
       signal: controller.signal,
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
         ...options.headers,
       },
     });
@@ -60,13 +56,16 @@ export async function apiRequest<T = unknown>(
     }
 
     if (error instanceof Error) {
-      if (error.name === 'AbortError') {
-        throw new ApiError('Request timeout', HTTP_STATUS.BAD_REQUEST);
+      if (error.name === "AbortError") {
+        throw new ApiError("Request timeout", HTTP_STATUS.BAD_REQUEST);
       }
       throw new ApiError(error.message, HTTP_STATUS.INTERNAL_SERVER_ERROR);
     }
 
-    throw new ApiError('Unknown error occurred', HTTP_STATUS.INTERNAL_SERVER_ERROR);
+    throw new ApiError(
+      "Unknown error occurred",
+      HTTP_STATUS.INTERNAL_SERVER_ERROR
+    );
   }
 }
 
@@ -80,14 +79,14 @@ export async function retryRequest<T = unknown>(
     try {
       return await requestFn();
     } catch (error) {
-      lastError = error instanceof Error ? error : new Error('Unknown error');
-      
+      lastError = error instanceof Error ? error : new Error("Unknown error");
+
       if (i === attempts - 1) {
         throw lastError;
       }
-
-      // Exponential backoff
-      await new Promise(resolve => setTimeout(resolve, Math.pow(2, i) * 1000));
+      await new Promise((resolve) =>
+        setTimeout(resolve, Math.pow(2, i) * 1000)
+      );
     }
   }
 
